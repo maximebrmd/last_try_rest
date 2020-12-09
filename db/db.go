@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -61,6 +62,27 @@ func AddTrickTips(trickTips *models.TrickTips) (*primitive.ObjectID, error) {
 	oid := result.InsertedID.(primitive.ObjectID)
 
 	return &oid, nil
+}
+
+func AddTrickTipsImages(trickTips *models.TrickTips, id primitive.ObjectID) error {
+	client, ctx, cancel := getConnection()
+	defer cancel()
+	defer client.Disconnect(ctx)
+
+	_, err := client.Database("last_try").Collection("trickTips").UpdateOne(ctx,
+		bson.M{
+			"_id": id,
+		},
+		bson.D{
+			{"$set", bson.D{{"thumbnail", trickTips.Thumbnail}}},
+			{"$set", bson.D{{"sequence", trickTips.Sequence}}},
+		})
+
+	if err != nil {
+		return errors.New("Could not insert trickTips images")
+	}
+
+	return nil
 }
 
 func GetAllTrickTips() ([]*models.TrickTips, error) {
