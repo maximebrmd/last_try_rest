@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"last_try_rest/models"
@@ -16,15 +17,21 @@ func createUser(c *gin.Context) {
 		return
 	}
 
-	users, err := repository.GetAllUser(nil)
+	query := &models.Query{
+		Filters: map[string]interface{}{
+			"email": user.Email,
+		},
+	}
+
+	users, err := repository.GetAllUser(query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	for _, user := range users {
-		// TODO: Check User don't exist before creating a new one
-		fmt.Println(user)
+	if len(users) > 0 {
+		c.JSON(http.StatusConflict, errors.New("email already exists"))
+		return
 	}
 
 	//JWT & Hash PWD

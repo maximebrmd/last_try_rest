@@ -3,6 +3,7 @@ package user
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"last_try_rest/models"
 	"last_try_rest/repository"
@@ -60,7 +61,7 @@ func updateUser(c *gin.Context) {
 	userForm := &models.UserForm{}
 
 	id := c.Params.ByName("id")
-	if err := c.ShouldBind(&userForm); err != nil {
+	if err := c.ShouldBindJSON(&userForm); err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
@@ -91,4 +92,29 @@ func updateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, true)
+}
+
+func toggleFavorite(c *gin.Context) {
+	favoriteForm := &models.FavoriteForm{}
+
+	if err := c.ShouldBindJSON(favoriteForm); err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	favorite, err := repository.GetFavorite(favoriteForm.UserID, favoriteForm.TrickTipsID)
+	if err != nil {
+		// Happens once in a user life time
+		favorite.ID = primitive.NewObjectID()
+		favorite.UserID = favoriteForm.UserID
+		favorite.TrickTipsID = favoriteForm.TrickTipsID
+	}
+	favorite.IsFavorite = !favorite.IsFavorite
+
+	if err := repository.UpdateFavorite(favorite); err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, bson.M{"toggleFavorite": favorite})
 }

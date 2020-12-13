@@ -8,8 +8,8 @@ import (
 func ApplyRoutes(r *gin.RouterGroup) {
 	user := r.Group("/user")
 	{
+		user.POST("/:id/favorite", toggleFavorite)
 		user.PATCH("/:id/avatar", updateAvatar)
 		user.PATCH("/:id", updateUser)
-		//trickTips.DELETE("/:id", deleteTrickTips)
 	}
 }
