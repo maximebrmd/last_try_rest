@@ -27,20 +27,23 @@ const (
 
 type TrickTips struct {
 	ID              primitive.ObjectID `json:"id" bson:"_id"`
-	Title           *string            `json:"title" binding:"required"`
+	Title           *string            `json:"title" binding:"required" bson:"title"`
 	Thumbnail       *string            `json:"thumbnail" bson:"thumbnail"`
-	Url             *string            `json:"url" binding:"required"`
-	Category        *TrickTipsCategory `json:"category" binding:"required"`
-	Level           *TrickTipsLevel    `json:"level" binding:"required"`
+	Url             *string            `json:"url" binding:"required" bson:"url"`
+	Category        *TrickTipsCategory `json:"category" binding:"required" bson:"category"`
+	Level           *TrickTipsLevel    `json:"level" binding:"required" bson:"level"`
 	Sequence        []*string          `json:"sequence" bson:"sequence"`
-	DescriptionStep []*string          `json:"descriptionStep" binding:"required"`
-	TotalStep       *uint              `json:"totalStep" binding:"required"`
+	DescriptionStep []*string          `json:"descriptionStep" binding:"required" bson:"descriptionStep"`
 }
 
-type TrickTipsImages struct {
-	TrickTipsID *string                 `json:"trickTipsID" form:"trickTipsID" binding:"required"`
-	Thumbnail   *multipart.FileHeader   `json:"thumbnail" form:"thumbnail" binding:"required"`
-	Sequence    []*multipart.FileHeader `json:"sequence" form:"sequence" binding:"required"`
+type TrickTipsForm struct {
+	Title           *string                 `json:"title"`
+	Thumbnail       *multipart.FileHeader   `json:"thumbnail"`
+	Url             *string                 `json:"url"`
+	Category        *TrickTipsCategory      `json:"category"`
+	Level           *TrickTipsLevel         `json:"level"`
+	Sequence        []*multipart.FileHeader `json:"sequence"`
+	DescriptionStep []*string               `json:"descriptionStep"`
 }
 
 func EncodeFile(file multipart.File) (*string, error) {
