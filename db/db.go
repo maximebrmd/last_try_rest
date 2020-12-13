@@ -2,13 +2,9 @@ package db
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"last_try_rest/models"
 	"log"
 	"time"
 )
@@ -20,7 +16,7 @@ const (
 )
 
 // GetConnection - Retrieves a client to the DocumentDB
-func getConnection() (*mongo.Client, context.Context, context.CancelFunc) {
+func GetConnection() (*mongo.Client, context.Context, context.CancelFunc) {
 	host := "localhost"
 	port := "27017"
 
@@ -46,63 +42,4 @@ func getConnection() (*mongo.Client, context.Context, context.CancelFunc) {
 
 	fmt.Println("Connected to MongoDB!")
 	return client, ctx, cancel
-}
-
-func AddTrickTips(trickTips *models.TrickTips) (*primitive.ObjectID, error) {
-	client, ctx, cancel := getConnection()
-	defer cancel()
-	defer client.Disconnect(ctx)
-	trickTips.ID = primitive.NewObjectID()
-
-	result, err := client.Database("last_try").Collection("trickTips").InsertOne(ctx, trickTips)
-	if err != nil {
-		log.Printf("Could not create trickTips: %v", err)
-		return nil, err
-	}
-	oid := result.InsertedID.(primitive.ObjectID)
-
-	return &oid, nil
-}
-
-func AddTrickTipsImages(trickTips *models.TrickTips, id primitive.ObjectID) error {
-	client, ctx, cancel := getConnection()
-	defer cancel()
-	defer client.Disconnect(ctx)
-
-	_, err := client.Database("last_try").Collection("trickTips").UpdateOne(ctx,
-		bson.M{
-			"_id": id,
-		},
-		bson.D{
-			{"$set", bson.D{{"thumbnail", trickTips.Thumbnail}}},
-			{"$set", bson.D{{"sequence", trickTips.Sequence}}},
-		})
-
-	if err != nil {
-		return errors.New("Could not insert trickTips images")
-	}
-
-	return nil
-}
-
-func GetAllTrickTips() ([]*models.TrickTips, error) {
-	var trickTips []*models.TrickTips
-
-	client, ctx, cancel := getConnection()
-	defer cancel()
-	defer client.Disconnect(ctx)
-	db := client.Database("last_try")
-	collection := db.Collection("trickTips")
-	cursor, err := collection.Find(ctx, bson.D{})
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-	err = cursor.All(ctx, &trickTips)
-	if err != nil {
-		log.Printf("Failed marshalling %v", err)
-		return nil, err
-	}
-
-	return trickTips, nil
 }

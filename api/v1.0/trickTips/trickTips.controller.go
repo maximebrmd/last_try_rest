@@ -1,15 +1,15 @@
 package trickTips
 
 import (
-	"fmt"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"last_try_rest/db"
 	"last_try_rest/models"
+	"last_try_rest/repository"
 	"net/http"
 )
 
-func addTrickTips(c *gin.Context) {
+func createTrickTips(c *gin.Context) {
 	trickTips := &models.TrickTips{}
 
 	if err := c.ShouldBindJSON(trickTips); err != nil {
@@ -17,7 +17,7 @@ func addTrickTips(c *gin.Context) {
 		return
 	}
 
-	oid, err := db.AddTrickTips(trickTips)
+	oid, err := repository.CreateTrickTips(trickTips)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -27,17 +27,51 @@ func addTrickTips(c *gin.Context) {
 	c.JSON(http.StatusOK, trickTips)
 }
 
-func addTrickTipsImages(c *gin.Context) {
-	trickTipsImages := &models.TrickTipsImages{}
-	trickTips := &models.TrickTips{}
+func getAllTrickTips(c *gin.Context) {
+	query := &models.Query{}
 
-	if err := c.ShouldBind(&trickTipsImages); err != nil {
+	if err := c.ShouldBindJSON(query); err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
+	allTrickTips, err := repository.GetAllTrickTips(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, allTrickTips)
+}
+
+func updateTrickTipsImages(c *gin.Context) {
+	trickTipsForm := &models.TrickTipsForm{}
+
+	id := c.Params.ByName("id")
+	if err := c.ShouldBind(&trickTipsForm); err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if trickTipsForm.Sequence == nil || trickTipsForm.Thumbnail == nil {
+		c.JSON(http.StatusBadRequest, errors.New("Sequence and Thumbnail should be binded"))
+		return
+	}
+
+	trickTipsID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	trickTips, err := repository.GetTrickTipsByID(trickTipsID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, err.Error())
+		return
+	}
+
 	// Encode Thumbnail
-	file, err := trickTipsImages.Thumbnail.Open()
+	file, err := trickTipsForm.Thumbnail.Open()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -50,7 +84,8 @@ func addTrickTipsImages(c *gin.Context) {
 	}
 
 	// Encode Sequence
-	for _, sequence := range trickTipsImages.Sequence {
+	trickTips.Sequence = make([]*string, 0)
+	for _, sequence := range trickTipsForm.Sequence {
 		file, err := sequence.Open()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, err.Error())
@@ -66,30 +101,11 @@ func addTrickTipsImages(c *gin.Context) {
 		trickTips.Sequence = append(trickTips.Sequence, base64)
 	}
 
-	fmt.Println(*trickTipsImages.TrickTipsID)
-
-	trickTipsID, err := primitive.ObjectIDFromHex(*trickTipsImages.TrickTipsID)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(trickTipsID)
-
-	err = db.AddTrickTipsImages(trickTips, trickTipsID)
+	err = repository.UpdateTrickTips(trickTips)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	c.JSON(http.StatusOK, true)
-}
-
-func getAllTrickTips(c *gin.Context) {
-	allTrickTips, err := db.GetAllTrickTips()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	c.JSON(http.StatusOK, allTrickTips)
 }
