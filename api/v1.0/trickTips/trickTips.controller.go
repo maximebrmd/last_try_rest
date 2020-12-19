@@ -7,6 +7,7 @@ import (
 	"last_try_rest/models"
 	"last_try_rest/repository"
 	"net/http"
+	"strconv"
 )
 
 func createTrickTips(c *gin.Context) {
@@ -28,11 +29,24 @@ func createTrickTips(c *gin.Context) {
 }
 
 func getAllTrickTips(c *gin.Context) {
-	query := &models.Query{}
+	query := &models.Query{
+		Filters: map[string]interface{}{},
+		Sort:    map[string]interface{}{},
+	}
 
-	if err := c.ShouldBindJSON(query); err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
-		return
+	filterQuery := c.QueryMap("filters")
+	sortQuery := c.QueryMap("sort")
+
+	for i, v := range filterQuery {
+		query.Filters[i] = v
+	}
+	for i, v := range sortQuery {
+		order, err := strconv.Atoi(v)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, err.Error())
+			return
+		}
+		query.Sort[i] = order
 	}
 
 	allTrickTips, err := repository.GetAllTrickTips(query)

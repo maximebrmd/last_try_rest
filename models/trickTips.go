@@ -38,11 +38,11 @@ type TrickTips struct {
 
 type TrickTipsForm struct {
 	Title           *string                 `json:"title"`
-	Thumbnail       *multipart.FileHeader   `json:"thumbnail"`
+	Thumbnail       *multipart.FileHeader   `json:"thumbnail" form:"thumbnail"`
 	Url             *string                 `json:"url"`
 	Category        *TrickTipsCategory      `json:"category"`
 	Level           *TrickTipsLevel         `json:"level"`
-	Sequence        []*multipart.FileHeader `json:"sequence"`
+	Sequence        []*multipart.FileHeader `json:"sequence" form:"sequence"`
 	DescriptionStep []*string               `json:"descriptionStep"`
 }
 

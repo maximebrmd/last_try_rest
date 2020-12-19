@@ -6,9 +6,9 @@ import (
 
 // ApplyRoutes Auth routes
 func ApplyRoutes(r *gin.RouterGroup) {
-	auth := r.Group("/trickTips")
+	auth := r.Group("/auth")
 	{
-		auth.POST("/", createUser)
-		auth.POST("/", loginUser)
+		auth.POST("/register", createUser)
+		auth.POST("/login", loginUser)
 	}
 }
