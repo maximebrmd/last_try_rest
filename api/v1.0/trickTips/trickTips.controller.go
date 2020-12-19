@@ -1,13 +1,14 @@
 package trickTips
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"last_try_rest/models"
 	"last_try_rest/repository"
 	"net/http"
-	"strconv"
 )
 
 func createTrickTips(c *gin.Context) {
@@ -34,20 +35,27 @@ func getAllTrickTips(c *gin.Context) {
 		Sort:    map[string]interface{}{},
 	}
 
-	filterQuery := c.QueryMap("filters")
-	sortQuery := c.QueryMap("sort")
+	filters := c.Query("filters")
+	if len(filters) <= 0 {
+		filters = "{}"
+	}
+	err := json.Unmarshal([]byte(filters), &query.Filters)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+	sort := c.Query("sort")
+	if len(sort) <= 0 {
+		sort = "{}"
+	}
+	err = json.Unmarshal([]byte(sort), &query.Sort)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
 
-	for i, v := range filterQuery {
-		query.Filters[i] = v
-	}
-	for i, v := range sortQuery {
-		order, err := strconv.Atoi(v)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, err.Error())
-			return
-		}
-		query.Sort[i] = order
-	}
+	fmt.Println(query.Filters)
+	fmt.Println(query.Sort)
 
 	allTrickTips, err := repository.GetAllTrickTips(query)
 	if err != nil {

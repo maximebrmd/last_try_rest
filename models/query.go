@@ -1,6 +1,6 @@
 package models
 
 type Query struct {
-	Filters map[string]interface{} `json:"filters" binding:"required"`
-	Sort    map[string]interface{} `json:"sort" binding:"required"`
+	Filters map[string]interface{} `json:"filters"`
+	Sort    map[string]interface{} `json:"sort"`
 }
